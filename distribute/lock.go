@@ -18,8 +18,8 @@ type DistributedLock struct {
 func NewDistributedLock(client *redis.Client, key, value string, expiry time.Duration) *DistributedLock {
 	return &DistributedLock{
 		client: client,
-		key:    key,
-		value:  value,
+		Key:    key,
+		Value:  value,
 		expiry: expiry,
 	}
 }
@@ -27,7 +27,7 @@ func NewDistributedLock(client *redis.Client, key, value string, expiry time.Dur
 // TryLock attempts to acquire the lock. Returns true if lock was acquired.
 func (lock *DistributedLock) TryLock(ctx context.Context) (bool, error) {
 	// 使用SET命令，它在Redis 2.6.12+中是原子操作
-	result := lock.client.SetNX(ctx, lock.key, lock.value, lock.expiry)
+	result := lock.client.SetNX(ctx, lock.Key, lock.Value, lock.expiry)
 	if err := result.Err(); err != nil {
 		return false, err
 	}
@@ -45,7 +45,7 @@ func (lock *DistributedLock) Unlock(ctx context.Context) error {
         end
     `)
 
-	result, err := unlockScript.Run(ctx, lock.client, []string{lock.key}, lock.value).Result()
+	result, err := unlockScript.Run(ctx, lock.client, []string{lock.Key}, lock.Value).Result()
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (lock *DistributedLock) Renew(ctx context.Context) error {
             return 0
         end
     `)
-	result, err := script.Run(ctx, lock.client, []string{lock.key}, lock.value, int(lock.expiry.Seconds())).Result()
+	result, err := script.Run(ctx, lock.client, []string{lock.Key}, lock.Value, int(lock.expiry.Seconds())).Result()
 	if err != nil {
 		return err
 	}
