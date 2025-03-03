@@ -10,8 +10,8 @@ import (
 
 type DistributedLock struct {
 	client *redis.Client
-	key    string
-	value  string
+	Key    string
+	Value  string
 	expiry time.Duration
 }
 
