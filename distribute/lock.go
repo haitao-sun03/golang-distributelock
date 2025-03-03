@@ -55,3 +55,22 @@ func (lock *DistributedLock) Unlock(ctx context.Context) error {
 	}
 	return nil
 }
+
+// 锁续期
+func (lock *DistributedLock) Renew(ctx context.Context) error {
+	script := redis.NewScript(`
+        if redis.call("GET", KEYS[1]) == ARGV[1] then
+            return redis.call("EXPIRE", KEYS[1], ARGV[2])
+        else
+            return 0
+        end
+    `)
+	result, err := script.Run(ctx, lock.client, []string{lock.key}, lock.value, int(lock.expiry.Seconds())).Result()
+	if err != nil {
+		return err
+	}
+	if result == int64(0) {
+		return fmt.Errorf("lock not held by current client")
+	}
+	return nil
+}
